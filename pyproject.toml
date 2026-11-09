@@ -1,0 +1,33 @@
+[project]
+name = "sentiment-tg-bot"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "datasets",
+    "pymorphy3",
+    "razdel",
+    "nltk",
+    "fastapi",
+    "scikit-learn",
+    "pandas",
+    "joblib",
+    "pydantic-settings",
+    "aiogram",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "ruff",
+    "black",
+    "httpx",
+]
+
+[tool.ruff]
+line-length = 88
+
+[tool.black]
+line-length = 88
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
