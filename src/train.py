@@ -1,14 +1,13 @@
 """Обучение моделей и сохранение в models/."""
 from pathlib import Path
 
-from datasets import load_dataset
 import joblib
 import pandas as pd
-
+from datasets import load_dataset
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
-from sklearn.naive_bayes import MultinomialNB
 from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import Pipeline
 
 from src.preprocessing import clean_text

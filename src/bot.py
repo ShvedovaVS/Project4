@@ -7,6 +7,7 @@ from aiogram.filters import Command
 
 from src.config import settings
 from src.model import ensemble_predict, load_model, predict
+from src.preprocessing import validate_text
 
 logging.basicConfig(level=settings.log_level)
 logger = logging.getLogger(__name__)
@@ -77,7 +78,7 @@ def _format_comparison(text: str, result: dict) -> str:
     if len(text) > 300:
         display_text += "..."
 
-    lines = [f"📊 *Анализ тональности*\n", f"📝 *Текст:* «{display_text}»\n", "🔬 *Результаты моделей:*"]
+    lines = ["📊 *Анализ тональности*\n", f"📝 *Текст:* «{display_text}»\n", "🔬 *Результаты моделей:*"]
 
     # Результаты каждой модели
     for r in result["models_results"]:
@@ -123,12 +124,12 @@ async def cmd_start(message: types.Message) -> None:
     welcome = (
         "👋 *Привет! Я — бот для анализа тональности текста.*\n\n"
         "Я помогу определить, положительное ли сообщение, нейтральное или отрицательное.\n\n"
-        "🤖 *Мои модели ({count}):*\n{list}\n\n"
+        f"🤖 *Мои модели ({model_count}):*\n{model_list}\n\n"
         "📌 *Как пользоваться:*\n"
         "• Просто *напишите мне текст* — я проанализирую его всеми моделями.\n\n"
         "⚠️ Обратите внимание: я анализирую русскоязычные тексты.\n\n"
         "🚀 Попробуйте — отправьте любой текст!"
-    ).format(count=model_count, list=model_list)
+    )
 
     await message.answer(welcome, parse_mode="Markdown")
 
@@ -139,6 +140,13 @@ async def handle_message(message: types.Message) -> None:
     text = message.text.strip()
     if not text:
         await message.answer("✏️ Пожалуйста, отправьте текст для анализа.")
+        return
+
+    if validate_text(text) is None:
+        await message.answer(
+            "🤔 Текст слишком короткий."
+            "Попробуйте отправить более развёрнутый текст."
+        )
         return
 
     if not models:
@@ -154,12 +162,12 @@ async def handle_message(message: types.Message) -> None:
             response = _format_comparison(text, result)
         else:
             # Одна модель — простой ответ
-            result = predict(text, list(models.values())[0])
+            result = predict(text, next(iter(models.values())))
             response = _format_single(
                 text, result["sentiment"], result["confidence"]
             )
         await message.answer(response, parse_mode="Markdown")
-    except Exception as exc:
+    except Exception:
         logger.exception("Ошибка при анализе сообщения")
         await message.answer(
             "❌ Произошла ошибка при анализе. Попробуйте позже."

@@ -1,52 +1,38 @@
 import re
-import nltk
-from nltk.corpus import stopwords
-from razdel import tokenize
-from pymorphy3 import MorphAnalyzer
+import unicodedata
 
-nltk.download("stopwords")
 
-russian_stopwords = set(
-    stopwords.words("russian")
-)
+def clean_text(text: str) -> str:
+    """Очищает текст: Unicode, zero-width символы, URL, множественные пробелы."""
+    if not text or not isinstance(text, str):
+        return ""
 
-morph = MorphAnalyzer()
+    # Нормализация Unicode
+    text = unicodedata.normalize("NFKC", text)
 
-def clean_text(text):
+    # Удаляет zero-width и другие невидимые Unicode-символы
+    text = re.sub(r"[\u200b\u200c\u200d\ufeff\u2060]", "", text)
 
-    text = str(text).lower()
-
+    # Удаляет URL
     text = re.sub(r"http\S+", " ", text)
 
-    text = re.sub(
-        r"[^а-яёa-z\s]",
-        " ",
-        text
-    )
+    # Заменяет множественные пробелы, табуляции, переносы строк на один пробел
+    text = re.sub(r"\s+", " ", text).strip()
 
-    text = re.sub(
-        r"\s+",
-        " ",
-        text
-    )
+    return text
 
-    tokens = [
-        token.text
-        for token in tokenize(text)
-    ]
 
-    lemmas = []
+def validate_text(text: str, min_words: int = 2) -> str | None:
+    """Проверяет, что текст не пустой и содержит достаточно слов после очистки.
 
-    for token in tokens:
+    Возвращает очищенный текст, если он валиден, или None, если слишком короткий.
+    """
+    stripped = text.strip()
+    if not stripped:
+        return None
 
-        if len(token) <= 2:
-            continue
+    cleaned = clean_text(stripped)
+    if not cleaned or len(cleaned.split()) < min_words:
+        return None
 
-        if token in russian_stopwords:
-            continue
-
-        lemma = morph.parse(token)[0].normal_form
-
-        lemmas.append(lemma)
-
-    return " ".join(lemmas)
+    return cleaned
