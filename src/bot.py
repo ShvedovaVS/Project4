@@ -17,15 +17,19 @@ dp = Dispatcher()
 
 # Загружаем все доступные модели
 models: dict[str, object] = {}
-try:
-    models["LogisticRegression"] = load_model(settings.model_path)
-except FileNotFoundError:
-    logger.warning(f"Модель не найдена: {settings.model_path}")
 
-try:
-    models["NaiveBayes"] = load_model(settings.model_path_nb)
-except FileNotFoundError:
-    logger.warning(f"Модель не найдена: {settings.model_path_nb}")
+def _load_model_safe(name: str, path: str) -> None:
+    """Загружает модель и логирует ошибки."""
+    try:
+        models[name] = load_model(path)
+        logger.info(f"Модель загружена: {name} ({path})")
+    except FileNotFoundError:
+        logger.warning(f"Модель не найдена: {path}")
+    except Exception:
+        logger.exception(f"Ошибка при загрузке модели {name} ({path}): файл повреждён или некорректный")
+
+_load_model_safe("LogisticRegression", settings.model_path)
+_load_model_safe("NaiveBayes", settings.model_path_nb)
 
 if not models:
     logger.error("Ни одна модель не загружена! Запустите: python -m src.train")

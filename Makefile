@@ -8,9 +8,6 @@ lint:
 test:
 	uv run pytest -q
 
-run:
-	uv run uvicorn src.api:app --reload
-
 bot:
 	uv run python -m src.bot
 
