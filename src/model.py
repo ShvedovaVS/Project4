@@ -1,4 +1,5 @@
 """Загрузка моделей и предсказание тональности."""
+
 from pathlib import Path
 
 import joblib
@@ -18,13 +19,18 @@ def predict(text: str, model) -> dict:
     cleaned = clean_text(text)
     proba = model.predict_proba([cleaned])[0]
     idx = int(proba.argmax())
+    class_labels = [LABELS[int(class_id)] for class_id in model.classes_]
 
     # Полное распределение вероятностей по всем классам
-    proba_dict = {LABELS[i]: round(float(proba[i]), 4) for i in range(len(proba))}
+    proba_dict = {
+        label: round(float(probability), 4)
+        for label, probability in zip(class_labels, proba)
+    }
+    sentiment = class_labels[idx]
 
     return {
         "text": text,
-        "sentiment": LABELS[idx],
+        "sentiment": sentiment,
         "confidence": round(float(proba[idx]), 3),
         "proba": proba_dict,
     }
